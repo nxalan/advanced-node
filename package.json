@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rimraf dist && tsc"
   },
   "repository": {
     "type": "git",
@@ -16,5 +16,14 @@
   "bugs": {
     "url": "https://github.com/nxalan/advanced-node/issues"
   },
-  "homepage": "https://github.com/nxalan/advanced-node#readme"
+  "homepage": "https://github.com/nxalan/advanced-node#readme",
+  "devDependencies": {
+    "typescript": "^4.7.4"
+  },
+  "engines": {
+    "node": "17.x"
+  },
+  "dependencies": {
+    "rimraf": "^3.0.2"
+  }
 }
