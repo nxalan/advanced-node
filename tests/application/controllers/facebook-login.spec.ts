@@ -1,14 +1,10 @@
+import { mock, MockProxy } from 'jest-mock-extended'
 import { AuthenticationError } from '@/domain/errors'
 import { FacebookAuthentication } from '@/domain/features'
-import { mock, MockProxy } from 'jest-mock-extended'
-
-type HttpResponse = {
-  statusCode: number
-  data: any
-}
+import { AccessToken } from '@/domain/models'
 
 class FacebookLoginController {
-  constructor (private readonly facebookAuthentication: FacebookAuthentication) { }
+  constructor (private readonly facebookAuthentication: FacebookAuthentication) {}
 
   async handle (httpRequest: any): Promise<HttpResponse> {
     if (httpRequest.token === '' || httpRequest.token === null || httpRequest.token === undefined) {
@@ -18,11 +14,25 @@ class FacebookLoginController {
       }
     }
     const result = await this.facebookAuthentication.perform({ token: httpRequest.token })
-    return {
-      statusCode: 401,
-      data: result
+    if (result instanceof AccessToken) {
+      return {
+        statusCode: 200,
+        data: {
+          accessToken: result.value
+        }
+      }
+    } else {
+      return {
+        statusCode: 401,
+        data: result
+      }
     }
   }
+}
+
+type HttpResponse = {
+  statusCode: number
+  data: any
 }
 
 describe('FacebookLoginController', () => {
@@ -31,6 +41,7 @@ describe('FacebookLoginController', () => {
 
   beforeAll(() => {
     facebookAuth = mock()
+    facebookAuth.perform.mockResolvedValue(new AccessToken('any_value'))
   })
 
   beforeEach(() => {
@@ -68,11 +79,21 @@ describe('FacebookLoginController', () => {
   })
 
   it('should return 401 if authentication fails', async () => {
-    facebookAuth.perform.mockResolvedValue(new AuthenticationError())
+    facebookAuth.perform.mockResolvedValueOnce(new AuthenticationError())
     const httpResponse = await sut.handle({ token: 'any_token' })
     expect(httpResponse).toEqual({
       statusCode: 401,
       data: new AuthenticationError()
+    })
+  })
+
+  it('should return 200 if authentication succeeds', async () => {
+    const httpResponse = await sut.handle({ token: 'any_token' })
+    expect(httpResponse).toEqual({
+      statusCode: 200,
+      data: {
+        accessToken: 'any_value'
+      }
     })
   })
 })
